@@ -1,0 +1,17 @@
+[project]
+name = "nlp-100knock"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ipykernel>=6.29.5",
+    "jupyter>=1.1.1",
+    "numpy>=2.1.2",
+    "ruff>=0.7.0",
+    "scipy>=1.14.1",
+]
+
+[tool.ruff]
+line-length = 80
+indent-width = 4
