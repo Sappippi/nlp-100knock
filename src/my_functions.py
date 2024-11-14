@@ -1,7 +1,6 @@
 import random as rd
 import re
 import pandas as pd
-import itertools
 
 
 def n_gram(sentence: str | list | tuple, 
@@ -71,20 +70,62 @@ def str_shuff(sentence):
 #         string = re.sub('\[\[[^\]]+\]\]', article, string)
 #     return string
 
+# def divide_conquer_split_multi(df: pd.DataFrame, list_idx_eos):
+#     """形態素のデータフレームを文単位に分割する
+#     """
+#     length = len(list_idx_eos)
+#     # 基底
+#     if length == 1:
+#         key_names = df.columns
+#         sentence = [dict(zip(key_names, df.iloc[i].to_list())) for i in range(df.shape[0])]
+#         return [sentence]
+
+#     # 分割統治
+#     middle = length // 2
+#     left_end = list_idx_eos[middle] + 1
+#     temp = list(map(lambda x: x-list_idx_eos[middle]-1, list_idx_eos[middle:])) # 右側はeosの位置がズレるので修正
+#     # 左右それぞれを並列処理
+#     with ProcessPoolExecutor(max_workers=2) as executor:
+#         result_left = executor.submit(divide_conquer_split(df.iloc[:left_end], list_idx_eos[:middle]))
+#         result_right = executor.submit(divide_conquer_split(df.iloc[left_end:], temp))
+#     return result_left.result() + result_right.result()
+
+# async def divide_conquer_split_async(df: pd.DataFrame, list_idx_eos):
+#     """形態素のデータフレームを文単位に分割する
+#     """
+#     length = len(list_idx_eos)
+#     # 基底
+#     if length == 1:
+#         key_names = df.columns
+#         sentence = [dict(zip(key_names, df.iloc[i].to_list())) for i in range(df.shape[0])]
+#         return [sentence]
+
+#     # 分割統治
+#     middle = length // 2
+#     left_end = list_idx_eos[middle] + 1
+#     temp = list(map(lambda x: x-list_idx_eos[middle]-1, list_idx_eos[middle:])) # 右側はeosの位置がズレるので修正
+
+#     # 左右の処理を非同期に行ったほうが早い?
+#     task_left = asyncio.create_task(divide_conquer_split(df.iloc[:left_end], list_idx_eos[:middle]))
+#     task_right = asyncio.create_task(divide_conquer_split(df.iloc[left_end:], temp))
+#     await task_left
+#     await task_right
+
+#     return task_left.result() + task_right.result()
+
 def divide_conquer_split(df: pd.DataFrame, list_idx_eos):
     """形態素のデータフレームを文単位に分割する
     """
     length = len(list_idx_eos)
-    # 基底
+    # 基底 ... EOSの数が1つだったら各形態素を辞書型にして, リストに格納し, これを文とする.
     if length == 1:
         key_names = df.columns
         sentence = [dict(zip(key_names, df.iloc[i].to_list())) for i in range(df.shape[0])]
         return [sentence]
-
     # 分割統治
     middle = length // 2
-    left_end = list_idx_eos[middle] + 1
+    left_end = list_idx_eos[middle] + 1 # これより小さい番号が左側になる
+    idx_eos_right = list(map(lambda x: x-list_idx_eos[middle]-1, list_idx_eos[middle:])) # 右側はeEOSの位置がズレるので修正
     list_left = divide_conquer_split(df.iloc[:left_end], list_idx_eos[:middle])
-    temp = list(map(lambda x: x-list_idx_eos[middle]-1, list_idx_eos[middle:])) # 右側はeosの位置がズレるので修正
-    list_right = divide_conquer_split(df.iloc[left_end:], temp)
+    list_right = divide_conquer_split(df.iloc[left_end:], idx_eos_right)
     return list_left + list_right
