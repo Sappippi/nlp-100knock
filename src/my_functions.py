@@ -129,3 +129,22 @@ def divide_conquer_split(df: pd.DataFrame, list_idx_eos):
     list_left = divide_conquer_split(df.iloc[:left_end], list_idx_eos[:middle])
     list_right = divide_conquer_split(df.iloc[left_end:], idx_eos_right)
     return list_left + list_right
+
+def get_co_occur(df: pd.DataFrame, key, list_idx_eos):
+    """共起している単語を取得する
+    """
+    length = len(list_idx_eos)
+    # 基底 ... EOSの数が1つだったら各形態素を辞書型にして, リストに格納し, これを文とする.
+    if length == 1:
+        if key in df["surface"].to_list():
+            df_co_occur = df[(df["surface"] != key) & (df["pos"] == "名詞")]
+            return df_co_occur["surface"].to_list()
+        else:
+            return []
+    # 分割統治
+    middle = length // 2
+    left_end = list_idx_eos[middle] + 1 # これより小さい番号が左側になる
+    idx_eos_right = list(map(lambda x: x-list_idx_eos[middle]-1, list_idx_eos[middle:])) # 右側はeEOSの位置がズレるので修正
+    list_left = get_co_occur(df.iloc[:left_end], key, list_idx_eos[:middle])
+    list_right = get_co_occur(df.iloc[left_end:], key, idx_eos_right)
+    return list_left + list_right
